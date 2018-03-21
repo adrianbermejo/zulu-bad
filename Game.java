@@ -1,4 +1,5 @@
 import java.util.Stack;
+import java.util.ArrayList;
 /**
  *  This class is the main class of the "World of Zuul" application. 
  *  "World of Zuul" is a very simple, text based adventure game.  Users 
@@ -23,6 +24,9 @@ public class Game
     private Item item;
     private Room ultimaSala;
     private Stack<Room> stack;
+    private ArrayList<Item> bolsillos;
+    private int pesoBolsillos;
+     private static final int MaxWeigth=500;
     /**
      * Create the game and initialise its internal map.
      */
@@ -31,7 +35,8 @@ public class Game
         createRooms();
         parser = new Parser();
          stack = new Stack<>();
-       
+        bolsillos = new ArrayList<>();
+        pesoBolsillos = 0;
     }
 
     /**
@@ -71,6 +76,8 @@ public class Game
         cleseYogaAlAireLibre.addItem("braguitas", 200);
         bar.addItem("cafelito", 200);
         bar.addItem("churro", 100);
+        hospital.addItem("pirulas", 100);
+        kiosco.addItem("pipas", 100);
         currentRoom =asilo;  // start game outside
     }
 
@@ -140,7 +147,17 @@ public class Game
         else if (commandWord.equals("back")){
             back();
         }
+         else if (commandWord.equals("take")){
+             take(command);
+            }
+             else if (commandWord.equals("drop")){
+                  drop(command);
+                }
+                 else if (commandWord.equals("items")){
+                     items();
+                    }
         return wantToQuit;
+        
     }
 
     // implementations of user commands:
@@ -231,5 +248,83 @@ public class Game
              else{
                   System.out.println("No se puede volver para atras");
                 }
+    }
+    
+     private void items() 
+    {
+        if (bolsillos.size() > 0){
+            System.out.println("Tu mochila tiene los siguientes objetos");
+            for (int i = 0; i < bolsillos.size(); i++){
+                System.out.println(bolsillos.get(i).informacionItem());
+            }
+        }
+        else{
+            System.out.println("Tu mochila esta vacia");
+        }
+    }
+
+    private void drop(Command command) 
+    {
+        if(!command.hasSecondWord()) {
+
+            System.out.println("No se sabe  la posicion del objeto");
+            return;
+        }
+
+        else {
+            Item itemQueSoltar = null;
+            String item = command.getSecondWord();
+            
+            for (Item itemASoltar : bolsillos) {
+                //Realizamos bucle que nos mire todos los objetos y si coincide con el nombre es el objeto que buscamos
+                if (itemASoltar.getDescription().equals(item)) {
+                    itemQueSoltar = itemASoltar;                    
+                }
+            }
+            // Se elimna de la mochila el objeto que se ha soltado
+            bolsillos.remove(itemQueSoltar);
+            if (itemQueSoltar == null) {
+                System.out.println("¡No tienes ese objeto!");
+            }
+            else {
+                currentRoom.itemQueSoltar(itemQueSoltar);
+                //Restamos el peso del objeto a la mochila
+                pesoBolsillos -= itemQueSoltar.getPeso();
+            }
+
+        }
+    }
+
+    private void take(Command command) 
+    {
+        if(!command.hasSecondWord()) {
+            // if there is no second word, we don't know the item to take...
+            System.out.println("No has indicado la posicion del objeto a coger");
+            return;
+        }
+        ArrayList<Item>bolsilloActual = null;
+        if (currentRoom.getItem().size() > 0){
+            bolsilloActual = currentRoom.getItem();
+        }
+        String posicionObjetoACoger = command.getSecondWord();
+
+        if (bolsilloActual != null && pesoBolsillos + bolsilloActual.get(Integer.parseInt(posicionObjetoACoger)).getPeso() < MaxWeigth){
+            System.out.println("Has cogido el siguiente objeto:" + "\n");
+            //Mostramos la posicion del objeto y la informacion del item
+            System.out.println("Posicion: " + Integer.parseInt(posicionObjetoACoger) + "\n" + " " 
+                + bolsilloActual.get(Integer.parseInt(posicionObjetoACoger)).informacionItem());
+            //Mostramos el peso de la mochila
+            pesoBolsillos += bolsilloActual.get(Integer.parseInt(posicionObjetoACoger)).getPeso();
+            bolsillos.add(bolsilloActual.get(Integer.parseInt(posicionObjetoACoger)));
+            //Eliminamos la posicion del objeto que hemos cogido
+            bolsilloActual.remove(Integer.parseInt(posicionObjetoACoger));
+        }
+
+        else{
+            if (bolsilloActual == null){
+                System.out.println("No hay objetos en la sala");
+            }
+            
+        }
     }
 }
